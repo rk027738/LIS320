@@ -1,17 +1,20 @@
-package main.java.SystemManagement;
+package SystemManagement;
 
-import main.java.BookManagement.Book;
-import main.java.LoanManagement.Loan;
-import main.java.UserManagement.User;
-import main.java.UserManagement.Admin;
+import BookManagement.Book;
+import LoanManagement.Loan;
+import UserManagement.User;
+import UserManagement.Admin;
 
 import javax.swing.*;
-import main.java.awt.*;
-import main.java.util.List;
+import java.awt.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
 
 public class Gui {
 
-    private LibrarySystem librarySystem;
+    private final LibrarySystem librarySystem;
     private JFrame frame;
     private User loggedInUser;
 
@@ -78,6 +81,7 @@ public class Gui {
         // added new buttons for add/remove user
         JButton addUserButton = new JButton("Add User");
         JButton removeUserButton = new JButton("Remove User");
+        JButton viewUsersButton = new JButton("View Users");
         JButton viewLoansButton = new JButton("View Loans");
         JButton logoutButton = new JButton("Logout");
 
@@ -88,6 +92,7 @@ public class Gui {
         //added add/remove user buttons to the gui panel
         panel.add(addUserButton);
         panel.add(removeUserButton);
+        panel.add(viewUsersButton);
         panel.add(viewLoansButton);
         panel.add(logoutButton);
 
@@ -100,6 +105,7 @@ public class Gui {
         // added action listeners for add/remove user
         addUserButton.addActionListener(e -> addUser());
         removeUserButton.addActionListener(e -> removeUser());
+        viewUsersButton.addActionListener(e -> viewUsers());
         viewLoansButton.addActionListener(e -> viewLoans());
         logoutButton.addActionListener(e -> logout());
 
@@ -141,16 +147,49 @@ public class Gui {
         loggedInUser = null;
         frame.dispose();
         initializeLogin();
+        librarySystem.setLoggedInUser(null);
     }
 
+    // private void showCatalog() {
+    //     List<Book> books = librarySystem.getCatalog().getBooks();
+    //     StringBuilder catalogDisplay = new StringBuilder("Books in the Catalog:\n\n");
+    //     for (Book book : books) {
+    //         catalogDisplay.append(book.toString()).append("\n");
+    //     }
+    //     JOptionPane.showMessageDialog(frame, catalogDisplay.toString(), "Catalog", JOptionPane.INFORMATION_MESSAGE);
+    // }
+
     private void showCatalog() {
-        List<Book> books = librarySystem.getCatalog().getBooks();
-        StringBuilder catalogDisplay = new StringBuilder("Books in the Catalog:\n\n");
-        for (Book book : books) {
-            catalogDisplay.append(book.toString()).append("\n");
+        try {
+            // Fetch the list of books from the catalog
+            List<Book> books = librarySystem.getCatalog().getBooks();
+
+            // Define column names for the JTable
+            String[] columnNames = {"Book ID", "Title", "Author", "Available"};
+
+            // Prepare data for the JTable
+            Object[][] data = new Object[books.size()][4];
+            for (int i = 0; i < books.size(); i++) {
+                Book book = books.get(i);
+                data[i][0] = book.getId();
+                data[i][1] = book.getTitle();
+                data[i][2] = book.getAuthor();
+                data[i][3] = book.isAvailable() ? "Yes" : "No";
+            }
+
+            // Create the JTable and place it in a JScrollPane
+            JTable catalogTable = new JTable(data, columnNames);
+            catalogTable.setEnabled(false); // Make the table non-editable
+            JScrollPane scrollPane = new JScrollPane(catalogTable);
+
+            // Display the table in a JOptionPane
+            JOptionPane.showMessageDialog(frame, scrollPane, "View Catalog", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error fetching catalog: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-        JOptionPane.showMessageDialog(frame, catalogDisplay.toString(), "Catalog", JOptionPane.INFORMATION_MESSAGE);
     }
+
 
     private void searchBook() {
         String keyword = JOptionPane.showInputDialog(frame, "Enter a keyword to search for books:", "Search Book", JOptionPane.QUESTION_MESSAGE);
@@ -195,67 +234,153 @@ public class Gui {
         }
     }
 
+//    private void borrowBook() {
+//        try {
+//            String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to borrow:", "Borrow Book", JOptionPane.QUESTION_MESSAGE);
+//            if (bookIdInput != null) {
+//                int bookId = Integer.parseInt(bookIdInput);
+//                librarySystem.borrowBookManually(bookId, loggedInUser.getId());
+//            }
+//        } catch (NumberFormatException e) {
+//            JOptionPane.showMessageDialog(frame, "Invalid Book ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+//        }
+//    }
+
     private void borrowBook() {
         try {
             String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to borrow:", "Borrow Book", JOptionPane.QUESTION_MESSAGE);
             if (bookIdInput != null) {
                 int bookId = Integer.parseInt(bookIdInput);
-                librarySystem.borrowBookManually(bookId, loggedInUser.getId());
+                librarySystem.borrowBook(bookId, loggedInUser.getId()); // Call borrowBook method
+                JOptionPane.showMessageDialog(frame, "Book borrowed successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(frame, "Invalid Book ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(frame, e.getMessage(), "Invalid Book ID", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(frame, e.getMessage(), "Borrowing Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+
+
+//    private void returnBook() {
+//        try {
+//            String loanIdInput = JOptionPane.showInputDialog(frame, "Enter Loan ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
+//            if (loanIdInput != null) {
+//                int loanId = Integer.parseInt(loanIdInput);
+//                librarySystem.returnBookManually(loanId);
+//            }
+//        } catch (NumberFormatException e) {
+//            JOptionPane.showMessageDialog(frame, "Invalid Loan ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+//        }
+//    }
 
     private void returnBook() {
         try {
-            String loanIdInput = JOptionPane.showInputDialog(frame, "Enter Loan ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
-            if (loanIdInput != null) {
-                int loanId = Integer.parseInt(loanIdInput);
-                librarySystem.returnBookManually(loanId);
+            String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
+            if (bookIdInput != null) {
+                int bookId = Integer.parseInt(bookIdInput);
+                librarySystem.returnBook(bookId); // Call the LibrarySystem method
+                JOptionPane.showMessageDialog(frame, "Book returned successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(frame, "Invalid Loan ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(frame, e.getMessage(), "Invalid Book ID", JOptionPane.ERROR_MESSAGE);
+        } catch (IllegalStateException e) {
+            JOptionPane.showMessageDialog(frame, e.getMessage(), "Return Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
+
+
+//    private void viewLoans() {
+//        List<Loan> loans = librarySystem.getLoans();
+//        StringBuilder loansDisplay = new StringBuilder("Loans:\n\n");
+//        for (Loan loan : loans) {
+//            loansDisplay.append(loan.toString()).append("\n");
+//        }
+//        JOptionPane.showMessageDialog(frame, loansDisplay.toString(), "Loans", JOptionPane.INFORMATION_MESSAGE);
+//    }
+
     private void viewLoans() {
-        List<Loan> loans = librarySystem.getLoans();
-        StringBuilder loansDisplay = new StringBuilder("Loans:\n\n");
-        for (Loan loan : loans) {
-            loansDisplay.append(loan.toString()).append("\n");
+        try {
+            // Fetch all loans
+            List<Loan> loans = librarySystem.getAllLoans();
+
+            // Prepare column names for the JTable
+            String[] columnNames = {"Loan ID", "Book ID", "User ID", "Issue Date", "Due Date", "Returned"};
+
+            // Prepare data for the JTable
+            Object[][] data = new Object[loans.size()][6];
+            for (int i = 0; i < loans.size(); i++) {
+                Loan loan = loans.get(i);
+                data[i][0] = loan.getLoanId();
+                data[i][1] = loan.getBookId();
+                data[i][2] = loan.getUserId();
+                data[i][3] = loan.getIssueDate();
+                data[i][4] = loan.getDueDate();
+                data[i][5] = loan.isReturned() ? "Yes" : "No";
+            }
+
+            // Create the JTable and place it in a JScrollPane
+            JTable loanTable = new JTable(data, columnNames);
+            loanTable.setEnabled(false); // Make the table non-editable
+            JScrollPane scrollPane = new JScrollPane(loanTable);
+
+            // Show the table in a JOptionPane
+            JOptionPane.showMessageDialog(frame, scrollPane, "View Loans", JOptionPane.INFORMATION_MESSAGE);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error fetching loans: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
-        JOptionPane.showMessageDialog(frame, loansDisplay.toString(), "Loans", JOptionPane.INFORMATION_MESSAGE);
     }
+
 
     private void addUser() {
         try {
+            // Get user input from dialogs
             String idInput = JOptionPane.showInputDialog(frame, "Enter User ID:", "Add User", JOptionPane.QUESTION_MESSAGE);
             String username = JOptionPane.showInputDialog(frame, "Enter Username:", "Add User", JOptionPane.QUESTION_MESSAGE);
             String password = JOptionPane.showInputDialog(frame, "Enter Password:", "Add User", JOptionPane.QUESTION_MESSAGE);
             String[] roles = {"admin", "user"};
             String role = (String) JOptionPane.showInputDialog(frame, "Select Role:", "Add User", JOptionPane.QUESTION_MESSAGE, null, roles, roles[1]);
 
+            // Ensure no input is null
             if (idInput != null && username != null && password != null && role != null) {
                 int id = Integer.parseInt(idInput);
 
-                // check if the user already exists
-                for (User user : librarySystem.getUsers()) {
-                    if (user.getId() == id) {
+                // Check if the user already exists in the database
+                String checkQuery = "SELECT COUNT(*) FROM users WHERE id = ?";
+                try (PreparedStatement checkStmt = librarySystem.getConnection().prepareStatement(checkQuery)) {
+                    checkStmt.setInt(1, id);
+                    ResultSet rs = checkStmt.executeQuery();
+                    if (rs.next() && rs.getInt(1) > 0) {
                         JOptionPane.showMessageDialog(frame, "User ID already exists. Cannot add duplicate user.", "Error", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 }
 
-                // adds a new user to the db
-                User newUser = role.equals("admin") ? new Admin(id, username, password, role) : new User(id, username, password, role);
-                librarySystem.getUsers().add(newUser);
+                // Insert the new user into the database
+                String insertQuery = "INSERT INTO users (id, username, password, role) VALUES (?, ?, ?, ?)";
+                try (PreparedStatement insertStmt = librarySystem.getConnection().prepareStatement(insertQuery)) {
+                    insertStmt.setInt(1, id);
+                    insertStmt.setString(2, username);
+                    insertStmt.setString(3, password); // Consider hashing passwords for security
+                    insertStmt.setString(4, role);
+                    insertStmt.executeUpdate();
+                }
+
+                // Show success message
                 JOptionPane.showMessageDialog(frame, "User added successfully: " + username, "Success", JOptionPane.INFORMATION_MESSAGE);
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(frame, "Invalid User ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error adding user to the database: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private void removeUser() {
         try {
@@ -263,25 +388,69 @@ public class Gui {
             if (idInput != null) {
                 int id = Integer.parseInt(idInput);
 
-                // removes the user with the gived id
-                boolean removed = librarySystem.getUsers().removeIf(user -> user.getId() == id);
+                // Prevent removing the root user with ID = 1
+                if (id == 1) {
+                    throw new UnsupportedOperationException("The root user cannot be removed.");
+                }
 
-                // displays messages to inform the user how the op. went
-                if (removed) {
-                    JOptionPane.showMessageDialog(frame, "User with ID " + id + " removed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
-                } else {
-                    JOptionPane.showMessageDialog(frame, "User with ID " + id + " not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                // Check if the user exists in the database
+                String checkQuery = "SELECT COUNT(*) FROM users WHERE id = ?";
+                try (PreparedStatement checkStmt = librarySystem.getConnection().prepareStatement(checkQuery)) {
+                    checkStmt.setInt(1, id);
+                    ResultSet rs = checkStmt.executeQuery();
+                    if (rs.next() && rs.getInt(1) == 0) {
+                        JOptionPane.showMessageDialog(frame, "User with ID " + id + " not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+                }
+
+                // Remove the user from the database
+                String deleteQuery = "DELETE FROM users WHERE id = ?";
+                try (PreparedStatement deleteStmt = librarySystem.getConnection().prepareStatement(deleteQuery)) {
+                    deleteStmt.setInt(1, id);
+                    int rowsAffected = deleteStmt.executeUpdate();
+
+                    // Display messages based on the outcome
+                    if (rowsAffected > 0) {
+                        JOptionPane.showMessageDialog(frame, "User with ID " + id + " removed successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "User with ID " + id + " not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(frame, "Invalid User ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (UnsupportedOperationException e) {
+            JOptionPane.showMessageDialog(frame, e.getMessage(), "Operation Not Allowed", JOptionPane.ERROR_MESSAGE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error removing user from the database: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-    public static void main(String[] args) {
-        LibrarySystem librarySystem = new LibrarySystem();
-        new Gui(librarySystem);
+    private void viewUsers() {
+        try {
+            List<User> users = librarySystem.getUsers();
+
+            String[] columnNames = {"User ID", "Username", "Role"};
+
+            Object[][] data = new Object[users.size()][3];
+            for (int i = 0; i < users.size(); i++) {
+                User user = users.get(i);
+                data[i][0] = user.getId();
+                data[i][1] = user.getUsername();
+                data[i][2] = user.getRole();
+            }
+
+            JTable userTable = new JTable(data, columnNames);
+            userTable.setEnabled(false); // Make the table non-editable
+            JScrollPane scrollPane = new JScrollPane(userTable);
+
+            JOptionPane.showMessageDialog(frame, scrollPane, "View Users", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(frame, "Error fetching users: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
+
 }
-
-
