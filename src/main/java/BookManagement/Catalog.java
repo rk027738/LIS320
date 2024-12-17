@@ -1,8 +1,10 @@
-package main.java.BookManagement;
+package BookManagement;
 
-import main.java.sql.*;
-import main.java.util.ArrayList;
-import main.java.util.List;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+import java.sql.Connection;
 
 public class Catalog {
     private final Connection connection;

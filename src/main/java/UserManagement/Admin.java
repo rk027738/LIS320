@@ -1,7 +1,7 @@
-package main.java.UserManagement;
+package UserManagement;
 
-import main.java.BookManagement.Book;
-import main.java.BookManagement.Catalog;
+import BookManagement.Book;
+import BookManagement.Catalog;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

@@ -12,15 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LibrarySystem {
-    public Connection getConnection() {
-        return connection;
-    }
-
     private final Connection connection; // Shared database connection
     private final Catalog catalog;      // Handles book-related operations
     private final List<Loan> loans;     // Manages loan-related data
     private User loggedInUser;          // Tracks the currently logged-in user
-
     public LibrarySystem() {
         try {
             // Establish the database connection
@@ -34,8 +29,6 @@ public class LibrarySystem {
             catalog = new Catalog(connection);
             // Initialize loans
             loans = new ArrayList<>();
-            // Add sample data
-            initializeSampleData();
             //Initialize Loan table
             initializeLoansTable();
 
@@ -44,52 +37,9 @@ public class LibrarySystem {
         }
     }
 
-    /**
-     * Adds sample data for testing purposes.
-     */
-    private void initializeSampleData() {
-        // Add sample books
-//        catalog.addBook(new Book(1, "1984", "George Orwell", true));
-//        catalog.addBook(new Book(2, "To Kill a Mockingbird", "Harper Lee", true));
-//        catalog.addBook(new Book(3, "The Great Gatsby", "F. Scott Fitzgerald", true));
+    public Connection getConnection() {
+        return connection;
     }
-
-
-
-    /**
-     * Authenticates a user by their username and password.
-     *
-     * @param username the entered username
-     * @param password the entered password
-     * @return a User object if authentication succeeds, null otherwise
-     */
-//    public User authenticate(String username, String password) {
-//        try {
-//            // Query the database to validate user credentials
-//            String query = "SELECT * FROM users WHERE username = ? AND password = ?";
-//            PreparedStatement stmt = connection.prepareStatement(query);
-//            stmt.setString(1, username);
-//            stmt.setString(2, password);
-//            ResultSet rs = stmt.executeQuery();
-//
-//            if (rs.next()) {
-//                String role = rs.getString("role");
-//                int userId = rs.getInt("id");
-//
-//                // Return an Admin or User object based on the role
-//                if ("admin".equalsIgnoreCase(role)) {
-//                    return new Admin(userId, username, password, role);
-//                } else {
-//                    return new User(userId, username, password, role);
-//                }
-//            }
-//
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        return null; // Authentication failed
-//    }
 
     public User authenticate(String username, String password) {
         try {
@@ -156,34 +106,6 @@ public class LibrarySystem {
         }
     }
 
-//    public void borrowBookManually(int bookId, int userId) {
-//        try {
-//            // Check if the book is available
-//            Book book = catalog.getBooks().stream()
-//                    .filter(b -> b.getId() == bookId && b.isAvailable())
-//                    .findFirst()
-//                    .orElse(null);
-//
-//            if (book == null) {
-//                System.out.println("Book with ID " + bookId + " is not available for borrowing.");
-//                return;
-//            }
-//
-//            // Create a new loan record
-//            Loan loan = new Loan(loans.size() + 1, bookId, userId,
-//                    java.time.LocalDate.now(),
-//                    java.time.LocalDate.now().plusDays(14));
-//            loans.add(loan); // Add to the in-memory list
-//
-//            // Update book availability in the database
-//            updateBookAvailability(bookId, false);
-//            System.out.println("Book borrowed successfully! Loan details: " + loan);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            System.out.println("An error occurred while borrowing the book.");
-//        }
-//    }
-
     public void borrowBook(int bookId, int userId) throws IllegalStateException, IllegalArgumentException {
         try {
             // Check if the book is available
@@ -224,34 +146,6 @@ public class LibrarySystem {
             throw new IllegalStateException("Database error while borrowing the book: " + e.getMessage());
         }
     }
-
-
-
-
-//    public void returnBookManually(int loanId) {
-//        try {
-//            // Find the loan by its ID
-//            Loan loan = loans.stream()
-//                    .filter(l -> l.getLoanId() == loanId && !l.isReturned())
-//                    .findFirst()
-//                    .orElse(null);
-//
-//            if (loan == null) {
-//                System.out.println("Invalid Loan ID or the book is already returned.");
-//                return;
-//            }
-//
-//            // Update the loan status
-//            loan.setReturned(true);
-//
-//            // Make the book available again
-//            updateBookAvailability(loan.getBookId(), true);
-//            System.out.println("Book returned successfully! Loan ID: " + loanId);
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            System.out.println("An error occurred while returning the book.");
-//        }
-//    }
 
     public void returnBook(int bookId) throws IllegalArgumentException, IllegalStateException {
         try {
@@ -299,17 +193,6 @@ public class LibrarySystem {
             results.forEach(System.out::println);
         }
     }
-
-//    public void updateBookAvailability(int bookId, boolean isAvailable) {
-//        String query = "UPDATE books SET is_available = ? WHERE id = ?";
-//        try (PreparedStatement stmt = connection.prepareStatement(query)) {
-//            stmt.setBoolean(1, isAvailable);
-//            stmt.setInt(2, bookId);
-//            stmt.executeUpdate();
-//        } catch (SQLException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public void updateBookAvailability(int bookId, boolean isAvailable) {
         String updateBookQuery = "UPDATE books SET is_available = ? WHERE id = ?";
@@ -392,20 +275,20 @@ public class LibrarySystem {
     }
 
     /**
-     * Sets the currently logged-in user.
-     *
-     * @param user the logged-in user
-     */
-    public void setLoggedInUser(User user) {
-        this.loggedInUser = user;
-    }
-
-    /**
      * Gets the currently logged-in user.
      *
      * @return the logged-in user
      */
     public User getLoggedInUser() {
         return loggedInUser;
+    }
+
+    /**
+     * Sets the currently logged-in user.
+     *
+     * @param user the logged-in user
+     */
+    public void setLoggedInUser(User user) {
+        this.loggedInUser = user;
     }
 }
