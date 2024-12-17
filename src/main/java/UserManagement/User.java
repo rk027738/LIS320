@@ -1,4 +1,4 @@
-package UserManagement;
+package main.java.UserManagement;
 
 import java.sql.Connection;
 import java.sql.SQLException;

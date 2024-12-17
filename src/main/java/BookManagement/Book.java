@@ -1,4 +1,4 @@
-package BookManagement;
+package main.java.BookManagement;
 
 public class Book {
     private int id;

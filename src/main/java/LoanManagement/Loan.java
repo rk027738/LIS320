@@ -1,6 +1,6 @@
-package LoanManagement;
+package main.java.LoanManagement;
 
-import java.time.LocalDate;
+import main.java.time.LocalDate;
 
 public class Loan {
     private int loanId;

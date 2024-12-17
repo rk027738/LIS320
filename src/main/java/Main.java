@@ -1,6 +1,8 @@
-import LoanManagement.Loan;
-import SystemManagement.LibrarySystem;
-import java.time.LocalDate;
+package main.java;
+
+import main.java.LoanManagement.Loan;
+import main.java.SystemManagement.LibrarySystem;
+import main.java.time.LocalDate;
 
 //TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.

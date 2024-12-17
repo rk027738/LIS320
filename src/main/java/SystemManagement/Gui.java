@@ -1,13 +1,13 @@
-package SystemManagement;
+package main.java.SystemManagement;
 
-import BookManagement.Book;
-import LoanManagement.Loan;
-import UserManagement.User;
-import UserManagement.Admin;
+import main.java.BookManagement.Book;
+import main.java.LoanManagement.Loan;
+import main.java.UserManagement.User;
+import main.java.UserManagement.Admin;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.List;
+import main.java.awt.*;
+import main.java.util.List;
 
 public class Gui {
 
