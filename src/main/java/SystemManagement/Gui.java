@@ -23,7 +23,7 @@ public class Gui {
         initializeLogin();
     }
 
-    private void initializeLogin() {
+    void initializeLogin() {
         frame = new JFrame("Library Information System - Login");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 200);
@@ -66,7 +66,7 @@ public class Gui {
         frame.setVisible(true);
     }
 
-    private void initializeAdminMenu() {
+    void initializeAdminMenu() {
         frame = new JFrame("Library System - Admin Menu");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 400);
@@ -112,7 +112,7 @@ public class Gui {
         frame.setVisible(true);
     }
 
-    private void initializeUserMenu() {
+    void initializeUserMenu() {
         frame = new JFrame("Library System - User Menu");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(600, 400);
@@ -143,7 +143,7 @@ public class Gui {
         frame.setVisible(true);
     }
 
-    private void logout() {
+    void logout() {
         loggedInUser = null;
         frame.dispose();
         initializeLogin();
@@ -159,7 +159,7 @@ public class Gui {
     //     JOptionPane.showMessageDialog(frame, catalogDisplay.toString(), "Catalog", JOptionPane.INFORMATION_MESSAGE);
     // }
 
-    private void showCatalog() {
+    void showCatalog() {
         try {
             // Fetch the list of books from the catalog
             List<Book> books = librarySystem.getCatalog().getBooks();
@@ -191,7 +191,7 @@ public class Gui {
     }
 
 
-    private void searchBook() {
+    void searchBook() {
         String keyword = JOptionPane.showInputDialog(frame, "Enter a keyword to search for books:", "Search Book", JOptionPane.QUESTION_MESSAGE);
         if (keyword != null && !keyword.trim().isEmpty()) {
             List<Book> results = librarySystem.getCatalog().searchBooks(keyword);
@@ -338,7 +338,6 @@ public class Gui {
 
     private void addUser() {
         try {
-            // Get user input from dialogs
             String idInput = JOptionPane.showInputDialog(frame, "Enter User ID:", "Add User", JOptionPane.QUESTION_MESSAGE);
             String username = JOptionPane.showInputDialog(frame, "Enter Username:", "Add User", JOptionPane.QUESTION_MESSAGE);
             String password = JOptionPane.showInputDialog(frame, "Enter Password:", "Add User", JOptionPane.QUESTION_MESSAGE);
@@ -453,4 +452,19 @@ public class Gui {
         }
     }
 
+    public Object getLoggedInUser() {
+        return loggedInUser;
+    }
+
+    public void setLoggedInUser(User loggedInUser) {
+        this.loggedInUser = loggedInUser;
+    }
+
+    public JFrame getFrame() {
+        return frame;
+    }
+
+    public void setFrame(JFrame frame) {
+        this.frame =frame;
+    }
 }
