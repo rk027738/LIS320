@@ -76,11 +76,43 @@ public class LibrarySystem {
         return null; // Return null if login fails
     }
 
-    public void addBookManually(int id, String title, String author) {
-        Book newBook = new Book(id, title, author, true);
+//    public void addBookManually(int id, String title, String author) {
+//        Book newBook = new Book(id, title, author, true);
+//        catalog.addBook(newBook); // Add book to the database via the Catalog
+//        System.out.println("Book added successfully: " + newBook);
+//    }
+
+    public void addBookManually(String title, String author) {
+        // Check if the book already exists
+        if (bookExists(title, author)) {
+            System.out.println("Book with the same title and author already exists: " + title + " by " + author);
+            return; // Exit the method to avoid adding duplicates
+        }
+
+        // Create a new book with an auto-generated ID (handled by the database)
+        Book newBook = new Book(0, title, author, true); // Use 0 or null for ID as a placeholder
         catalog.addBook(newBook); // Add book to the database via the Catalog
         System.out.println("Book added successfully: " + newBook);
     }
+
+
+    public boolean bookExists(String title, String author) {
+        // Query the database to check if a book with the given title and author exists
+        String query = "SELECT COUNT(*) FROM books WHERE title = ? AND author = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, title);
+            stmt.setString(2, author);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0; // Return true if the count is greater than 0
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
 
     public void removeBookManually(int bookId) {
         catalog.removeBook(bookId); // Remove book from the database via the Catalog

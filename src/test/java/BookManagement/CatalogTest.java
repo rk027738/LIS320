@@ -25,9 +25,9 @@ public class CatalogTest {
 
             stmt.execute("CREATE TABLE books (" +
                     "id INT AUTO_INCREMENT PRIMARY KEY, " +
-                    "title VARCHAR(255), " +
-                    "author VARCHAR(255), " +
-                    "is_available BOOLEAN)");
+                    "title VARCHAR(255) NOT NULL , " +
+                    "author VARCHAR(255) NOT NULL , " +
+                    "is_available BOOLEAN NOT NULL )");
         }
 
     }
