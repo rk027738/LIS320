@@ -1,23 +1,25 @@
 package LoanManagement;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Loan {
     private int loanId;
     private int bookId;
     private int userId;
-    private LocalDate issueDate;
-    private LocalDate dueDate;
+    private LocalDateTime issueDate;
+    private LocalDateTime dueDate;
     private boolean isReturned;
+    private double lateFee;
 
     // Constructor to create a new loan record
-    public Loan(int loanId, int bookId, int userId, LocalDate issueDate, LocalDate dueDate) {
+    public Loan(int loanId, int bookId, int userId, LocalDateTime issueDate, LocalDateTime dueDate, double lateFee) {
         this.loanId = loanId;
         this.bookId = bookId;
         this.userId = userId;
         this.issueDate = issueDate;
-        this.dueDate = issueDate.plusDays(7); // fixed loan duration to 7 days to prevent manual setting
-        this.isReturned = false;  // Default is that the book hasn't been returned
+        this.dueDate = issueDate.plusMinutes(2); // fixed loan duration to 7 days to prevent manual setting
+        this.isReturned = false;// Default is that the book hasn't been returned
+        this.lateFee = lateFee; // Initializing late fee
     }
 
     // Getters and setters
@@ -45,19 +47,19 @@ public class Loan {
         this.userId = userId;
     }
 
-    public LocalDate getIssueDate() {
+    public LocalDateTime getIssueDate() {
         return issueDate;
     }
 
-    public void setIssueDate(LocalDate issueDate) {
+    public void setIssueDate(LocalDateTime issueDate) {
         this.issueDate = issueDate;
     }
 
-    public LocalDate getDueDate() {
+    public LocalDateTime getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(LocalDate dueDate) {
+    public void setDueDate(LocalDateTime dueDate) {
         this.dueDate = dueDate;
     }
 
@@ -75,9 +77,19 @@ public class Loan {
         System.out.println("Loan " + loanId + " for book ID " + bookId + " has been returned.");
     }
 
+    public double getLateFee() {
+        return lateFee;
+    }
+
+    public void setLateFee(double lateFee) {
+        this.lateFee = lateFee;
+    }
+
     @Override
     public String toString() {
         return "Loan ID: " + loanId + ", Book ID: " + bookId + ", User ID: " + userId +
-               ", Issue Date: " + issueDate + ", Due Date: " + dueDate + ", Returned: " + isReturned;
+               ", Issue Date: " + issueDate + ", Due Date: " + dueDate + ", Returned: " + isReturned + ", Late Fee: " + lateFee;
     }
+
+
 }
