@@ -276,19 +276,6 @@ public class Gui {
         }
     }
 
-
-//    private void borrowBook() {
-//        try {
-//            String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to borrow:", "Borrow Book", JOptionPane.QUESTION_MESSAGE);
-//            if (bookIdInput != null) {
-//                int bookId = Integer.parseInt(bookIdInput);
-//                librarySystem.borrowBookManually(bookId, loggedInUser.getId());
-//            }
-//        } catch (NumberFormatException e) {
-//            JOptionPane.showMessageDialog(frame, "Invalid Book ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
-//        }
-//    }
-
     private void borrowBook() {
         try {
             String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to borrow:", "Borrow Book", JOptionPane.QUESTION_MESSAGE);
@@ -304,44 +291,117 @@ public class Gui {
         }
     }
 
-
-
 //    private void returnBook() {
 //        try {
-//            String loanIdInput = JOptionPane.showInputDialog(frame, "Enter Loan ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
-//            if (loanIdInput != null) {
-//                int loanId = Integer.parseInt(loanIdInput);
-//                librarySystem.returnBookManually(loanId);
+//            String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
+//            if (bookIdInput != null) {
+//                int bookId = Integer.parseInt(bookIdInput);
+//                librarySystem.returnBook(bookId); // Call the LibrarySystem method
+//                JOptionPane.showMessageDialog(frame, "Book returned successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
 //            }
-//        } catch (NumberFormatException e) {
-//            JOptionPane.showMessageDialog(frame, "Invalid Loan ID. Please enter a number.", "Error", JOptionPane.ERROR_MESSAGE);
+//        } catch (IllegalArgumentException e) {
+//            JOptionPane.showMessageDialog(frame, e.getMessage(), "Invalid Book ID", JOptionPane.ERROR_MESSAGE);
+//        } catch (IllegalStateException e) {
+//            JOptionPane.showMessageDialog(frame, e.getMessage(), "Return Error", JOptionPane.ERROR_MESSAGE);
+//        }
+//    }
+
+//    private void returnBook() {
+//        String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
+//        if (bookIdInput != null) {
+//            try {
+//                int bookId = Integer.parseInt(bookIdInput);
+//                librarySystem.returnBook(bookId); // Call the library system's return method
+//
+//                // Query for late fee (Placeholder, integrate with actual late fee retrieval logic)
+//                String query = "SELECT late_fee FROM loans WHERE book_id = ? AND is_returned = TRUE";
+//                double lateFee = 0.0;
+//                try (PreparedStatement stmt = librarySystem.getConnection().prepareStatement(query)) {
+//                    stmt.setInt(1, bookId);
+//                    ResultSet rs = stmt.executeQuery();
+//                    if (rs.next()) {
+//                        lateFee = rs.getDouble("late_fee");
+//                    }
+//                }
+//
+//                // Show message based on late fee
+//                if (lateFee > 0) {
+//                    JOptionPane.showMessageDialog(frame, "Late fee of " + lateFee + " applied. Please pay the librarian.", "Late Fee Applied", JOptionPane.WARNING_MESSAGE);
+//                } else {
+//                    JOptionPane.showMessageDialog(frame, "Book returned on time. No late fee applied.", "Success", JOptionPane.INFORMATION_MESSAGE);
+//                }
+//            } catch (NumberFormatException e) {
+//                JOptionPane.showMessageDialog(frame, "Invalid Book ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+//            } catch (Exception e) {
+//                JOptionPane.showMessageDialog(frame, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+//            }
 //        }
 //    }
 
     private void returnBook() {
-        try {
-            String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
-            if (bookIdInput != null) {
+        String bookIdInput = JOptionPane.showInputDialog(frame, "Enter Book ID to return:", "Return Book", JOptionPane.QUESTION_MESSAGE);
+        if (bookIdInput != null) {
+            try {
                 int bookId = Integer.parseInt(bookIdInput);
-                librarySystem.returnBook(bookId); // Call the LibrarySystem method
-                JOptionPane.showMessageDialog(frame, "Book returned successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+                librarySystem.returnBook(bookId); // Call the library system's return method
+
+                // Query for late fee
+                String query = "SELECT late_fee FROM loans WHERE book_id = ? AND is_returned = TRUE";
+                double lateFee = 0.0;
+                try (PreparedStatement stmt = librarySystem.getConnection().prepareStatement(query)) {
+                    stmt.setInt(1, bookId);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        lateFee = rs.getDouble("late_fee");
+                    }
+                }
+
+                // Show message based on late fee
+                if (lateFee > 0) {
+                    JOptionPane.showMessageDialog(frame, "Late fee of " + lateFee + " applied. Please pay the librarian.", "Late Fee Applied", JOptionPane.WARNING_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Book returned on time. No late fee applied.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(frame, "Invalid Book ID. Please enter a valid number.", "Error", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(frame, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(frame, e.getMessage(), "Invalid Book ID", JOptionPane.ERROR_MESSAGE);
-        } catch (IllegalStateException e) {
-            JOptionPane.showMessageDialog(frame, e.getMessage(), "Return Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
-
-
 //    private void viewLoans() {
-//        List<Loan> loans = librarySystem.getLoans();
-//        StringBuilder loansDisplay = new StringBuilder("Loans:\n\n");
-//        for (Loan loan : loans) {
-//            loansDisplay.append(loan.toString()).append("\n");
+//        try {
+//            // Fetch all loans
+//            List<Loan> loans = librarySystem.getAllLoans();
+//
+//            // Prepare column names for the JTable
+//            String[] columnNames = {"Loan ID", "Book ID", "User ID", "Issue Date", "Due Date", "Returned"};
+//
+//            // Prepare data for the JTable
+//            Object[][] data = new Object[loans.size()][6];
+//            for (int i = 0; i < loans.size(); i++) {
+//                Loan loan = loans.get(i);
+//                data[i][0] = loan.getLoanId();
+//                data[i][1] = loan.getBookId();
+//                data[i][2] = loan.getUserId();
+//                data[i][3] = loan.getIssueDate();
+//                data[i][4] = loan.getDueDate();
+//                data[i][5] = loan.isReturned() ? "Yes" : "No";
+//            }
+//
+//            // Create the JTable and place it in a JScrollPane
+//            JTable loanTable = new JTable(data, columnNames);
+//            loanTable.setEnabled(false); // Make the table non-editable
+//            JScrollPane scrollPane = new JScrollPane(loanTable);
+//
+//            // Show the table in a JOptionPane
+//            JOptionPane.showMessageDialog(frame, scrollPane, "View Loans", JOptionPane.INFORMATION_MESSAGE);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(frame, "Error fetching loans: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 //        }
-//        JOptionPane.showMessageDialog(frame, loansDisplay.toString(), "Loans", JOptionPane.INFORMATION_MESSAGE);
 //    }
 
     private void viewLoans() {
@@ -350,10 +410,10 @@ public class Gui {
             List<Loan> loans = librarySystem.getAllLoans();
 
             // Prepare column names for the JTable
-            String[] columnNames = {"Loan ID", "Book ID", "User ID", "Issue Date", "Due Date", "Returned"};
+            String[] columnNames = {"Loan ID", "Book ID", "User ID", "Issue Date", "Due Date", "Returned", "Late Fee"};
 
             // Prepare data for the JTable
-            Object[][] data = new Object[loans.size()][6];
+            Object[][] data = new Object[loans.size()][7]; // Adjusted to 7 columns
             for (int i = 0; i < loans.size(); i++) {
                 Loan loan = loans.get(i);
                 data[i][0] = loan.getLoanId();
@@ -362,6 +422,7 @@ public class Gui {
                 data[i][3] = loan.getIssueDate();
                 data[i][4] = loan.getDueDate();
                 data[i][5] = loan.isReturned() ? "Yes" : "No";
+                data[i][6] = loan.isReturned() && loan.getLateFee() > 0 ? loan.getLateFee() : "N/A"; // Late Fee
             }
 
             // Create the JTable and place it in a JScrollPane
@@ -377,6 +438,7 @@ public class Gui {
             JOptionPane.showMessageDialog(frame, "Error fetching loans: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
 
 //    private void addUser() {
@@ -520,14 +582,15 @@ public class Gui {
         try {
             List<User> users = librarySystem.getUsers();
 
-            String[] columnNames = {"User ID", "Username", "Role"};
+            String[] columnNames = {"User ID", "Username", "Role", "Password"};
 
-            Object[][] data = new Object[users.size()][3];
+            Object[][] data = new Object[users.size()][4];
             for (int i = 0; i < users.size(); i++) {
                 User user = users.get(i);
                 data[i][0] = user.getId();
                 data[i][1] = user.getUsername();
                 data[i][2] = user.getRole();
+                data[i][3] = user.getPassword();
             }
 
             JTable userTable = new JTable(data, columnNames);
