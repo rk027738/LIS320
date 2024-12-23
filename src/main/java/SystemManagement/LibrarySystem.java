@@ -8,16 +8,19 @@ import UserManagement.User;
 
 import java.sql.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LibrarySystem {
+    private static final double LATE_FEE_AMOUNT = 10.0; // Fixed late fee amount
     private final Connection connection; // Shared database connection
     private final Catalog catalog;      // Handles book-related operations
     private final List<Loan> loans;     // Manages loan-related data
     private User loggedInUser;          // Tracks the currently logged-in user
     public LibrarySystem() {
         try {
+
             // Establish the database connection
             connection = DriverManager.getConnection(
                     "jdbc:mysql://sql7.freesqldatabase.com:3306/sql7752156",
@@ -127,6 +130,7 @@ public class LibrarySystem {
                 "issue_date DATE NOT NULL, " +
                 "due_date DATE NOT NULL, " +
                 "is_returned BOOLEAN DEFAULT FALSE, " +
+                "late_fee DOUBLE DEFAULT 0.0, " + // Added late_fee column
                 "FOREIGN KEY (book_id) REFERENCES books(id), " +
                 "FOREIGN KEY (user_id) REFERENCES users(id)" +
                 ")";
@@ -138,34 +142,75 @@ public class LibrarySystem {
         }
     }
 
-    public void borrowBook(int bookId, int userId) throws IllegalStateException, IllegalArgumentException {
+//    public void borrowBook(int bookId, int userId) throws IllegalStateException, IllegalArgumentException {
+//        try {
+//            // Check if the book is available
+//            String checkBookQuery = "SELECT is_available FROM books WHERE id = ?";
+//            try (PreparedStatement checkStmt = connection.prepareStatement(checkBookQuery)) {
+//                checkStmt.setInt(1, bookId);
+//                ResultSet rs = checkStmt.executeQuery();
+//
+//                if (rs.next()) {
+//                    boolean isAvailable = rs.getBoolean("is_available");
+//                    if (!isAvailable) {
+//                        throw new IllegalStateException("The book is currently unavailable.");
+//                    }
+//                } else {
+//                    throw new IllegalArgumentException("Book ID not found.");
+//                }
+//            }
+//
+//            // Proceed with borrowing the book
+//            String insertLoanQuery = "INSERT INTO loans (book_id, user_id, issue_date, due_date) VALUES (?, ?, ?, ?)";
+//            try (PreparedStatement stmt = connection.prepareStatement(insertLoanQuery)) {
+//                LocalDate issueDate = LocalDate.now();
+//                LocalDate dueDate = issueDate.plusDays(7);
+//
+//                stmt.setInt(1, bookId);
+//                stmt.setInt(2, userId);
+//                stmt.setDate(3, Date.valueOf(issueDate));
+//                stmt.setDate(4, Date.valueOf(dueDate));
+//                stmt.executeUpdate();
+//            }
+//
+//            // Mark the book as unavailable
+//            updateBookAvailability(bookId, false);
+//
+//            System.out.println("Book borrowed successfully.");
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            throw new IllegalStateException("Database error while borrowing the book: " + e.getMessage());
+//        }
+//    }
+
+    public void borrowBook(int bookId, int userId) throws IllegalArgumentException {
         try {
             // Check if the book is available
             String checkBookQuery = "SELECT is_available FROM books WHERE id = ?";
             try (PreparedStatement checkStmt = connection.prepareStatement(checkBookQuery)) {
                 checkStmt.setInt(1, bookId);
                 ResultSet rs = checkStmt.executeQuery();
-
                 if (rs.next()) {
                     boolean isAvailable = rs.getBoolean("is_available");
                     if (!isAvailable) {
-                        throw new IllegalStateException("The book is currently unavailable.");
+                        throw new IllegalArgumentException("The book is currently unavailable.");
                     }
                 } else {
                     throw new IllegalArgumentException("Book ID not found.");
                 }
             }
 
-            // Proceed with borrowing the book
+            // Set issue date and due date
+            LocalDateTime issueDate = LocalDateTime.now();
+            LocalDateTime dueDate = issueDate.plusMinutes(2); // Hardcoded to 2 minutes for simplicity
+
+            // Insert the loan record
             String insertLoanQuery = "INSERT INTO loans (book_id, user_id, issue_date, due_date) VALUES (?, ?, ?, ?)";
             try (PreparedStatement stmt = connection.prepareStatement(insertLoanQuery)) {
-                LocalDate issueDate = LocalDate.now();
-                LocalDate dueDate = issueDate.plusDays(7);
-
                 stmt.setInt(1, bookId);
                 stmt.setInt(2, userId);
-                stmt.setDate(3, Date.valueOf(issueDate));
-                stmt.setDate(4, Date.valueOf(dueDate));
+                stmt.setTimestamp(3, Timestamp.valueOf(issueDate));
+                stmt.setTimestamp(4, Timestamp.valueOf(dueDate));
                 stmt.executeUpdate();
             }
 
@@ -179,31 +224,73 @@ public class LibrarySystem {
         }
     }
 
-    public void returnBook(int bookId) throws IllegalArgumentException, IllegalStateException {
+//    public void returnBook(int bookId) throws IllegalArgumentException, IllegalStateException {
+//        try {
+//            String checkLoanQuery = "SELECT loan_id, is_returned FROM loans WHERE book_id = ? AND is_returned = FALSE";
+//            try (PreparedStatement checkStmt = connection.prepareStatement(checkLoanQuery)) {
+//                checkStmt.setInt(1, bookId);
+//                ResultSet rs = checkStmt.executeQuery();
+//
+//                if (rs.next()) {
+//                    boolean isReturned = rs.getBoolean("is_returned");
+//                    int loanId = rs.getInt("loan_id");
+//
+//                    if (isReturned) {
+//                        throw new IllegalStateException("This book has already been returned.");
+//                    }
+//
+//                    // Mark the loan as returned
+//                    String updateLoanQuery = "UPDATE loans SET is_returned = TRUE WHERE loan_id = ?";
+//                    try (PreparedStatement updateStmt = connection.prepareStatement(updateLoanQuery)) {
+//                        updateStmt.setInt(1, loanId);
+//                        updateStmt.executeUpdate();
+//                    }
+//
+//                    // Mark the book as available
+//                    updateBookAvailability(bookId, true);
+//                    System.out.println("Book returned successfully.");
+//                } else {
+//                    throw new IllegalArgumentException("No active loan found for this Book ID.");
+//                }
+//            }
+//        } catch (SQLException e) {
+//            e.printStackTrace();
+//            throw new IllegalStateException("Database error while returning the book: " + e.getMessage());
+//        }
+//    }
+
+    public void returnBook(int bookId) throws IllegalArgumentException {
         try {
-            String checkLoanQuery = "SELECT loan_id, is_returned FROM loans WHERE book_id = ? AND is_returned = FALSE";
+            String checkLoanQuery = "SELECT loan_id, due_date, is_returned FROM loans WHERE book_id = ? AND is_returned = FALSE";
             try (PreparedStatement checkStmt = connection.prepareStatement(checkLoanQuery)) {
                 checkStmt.setInt(1, bookId);
                 ResultSet rs = checkStmt.executeQuery();
 
                 if (rs.next()) {
-                    boolean isReturned = rs.getBoolean("is_returned");
                     int loanId = rs.getInt("loan_id");
+                    LocalDateTime dueDate = rs.getTimestamp("due_date").toLocalDateTime();
+                    boolean isLate = LocalDateTime.now().isAfter(dueDate);
 
-                    if (isReturned) {
-                        throw new IllegalStateException("This book has already been returned.");
-                    }
+                    // Calculate late fee
+                    double lateFee = isLate ? LATE_FEE_AMOUNT : 0.0;
 
-                    // Mark the loan as returned
-                    String updateLoanQuery = "UPDATE loans SET is_returned = TRUE WHERE loan_id = ?";
+                    // Update loan record with return status and late fee
+                    String updateLoanQuery = "UPDATE loans SET is_returned = TRUE, late_fee = ? WHERE loan_id = ?";
                     try (PreparedStatement updateStmt = connection.prepareStatement(updateLoanQuery)) {
-                        updateStmt.setInt(1, loanId);
+                        updateStmt.setDouble(1, lateFee);
+                        updateStmt.setInt(2, loanId);
                         updateStmt.executeUpdate();
                     }
 
                     // Mark the book as available
                     updateBookAvailability(bookId, true);
-                    System.out.println("Book returned successfully.");
+
+                    // Print success message with late fee details
+                    if (isLate) {
+                        System.out.println("Book returned late. Late fee: " + lateFee);
+                    } else {
+                        System.out.println("Book returned on time.");
+                    }
                 } else {
                     throw new IllegalArgumentException("No active loan found for this Book ID.");
                 }
@@ -273,11 +360,12 @@ public class LibrarySystem {
                 int loanId = rs.getInt("loan_id");
                 int bookId = rs.getInt("book_id");
                 int userId = rs.getInt("user_id");
-                LocalDate issueDate = rs.getDate("issue_date").toLocalDate();
-                LocalDate dueDate = rs.getDate("due_date").toLocalDate();
+                LocalDateTime issueDate = rs.getTimestamp("issue_date").toLocalDateTime(); //changed from date to timestamp
+                LocalDateTime dueDate = rs.getTimestamp("due_date").toLocalDateTime(); //changed from date to timestamp
                 boolean isReturned = rs.getBoolean("is_returned");
+                double lateFee = rs.getDouble("late_fee"); // Fetch late fee
 
-                Loan loan = new Loan(loanId, bookId, userId, issueDate, dueDate);
+                Loan loan = new Loan(loanId, bookId, userId, issueDate, dueDate, lateFee);
                 loan.setReturned(isReturned);
                 loans.add(loan);
             }
